@@ -1,113 +1,90 @@
-import React, { Component } from "react";
+import { useState, useEffect, useRef } from "react";
 import MarvelServices from "../../../services/MarvelServices";
 import Spinner from "../../spinner/Spinner";
 import Error from "../../onError/Error";
 
-class CharItems extends Component {
-  state = {
-    charItems: [],
-    loading: true,
-    error: false,
-    newCharsLoading: false,
-    charEnded: false,
-  };
+function CharItems(props) {
+  const [charItems, setCharItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [newCharLoading, setNewCharLoading] = useState(false);
+  const [charEnded, setCharEnded] = useState(false);
 
-  marvelServices = new MarvelServices();
+  const marvelServices = new MarvelServices();
 
-  itemsRefs = [];
+  const itemsRefs = useRef([]);
 
-  setRef = (ref) => {
-    this.itemsRefs.push(ref);
-  };
-
-  onFocusItem = (id) => {
-    this.itemsRefs.forEach((item) =>
+  const onFocusItem = (id) => {
+    itemsRefs.current.forEach((item) =>
       item.classList.remove("char__item_selected")
     );
-    this.itemsRefs[id].classList.add("char__item_selected");
-    this.itemsRefs[id].focus();
+    itemsRefs.current[id].classList.add("char__item_selected");
+    itemsRefs.current[id].focus();
   };
 
-  componentDidMount() {
-    this.onRequest();
-  }
+  useEffect(() => {
+    props.getStateCharItems(newCharLoading);
+  }, [newCharLoading]);
 
-  componentDidUpdate(prevProps) {
-    if (this.props === prevProps) {
-      this.props.getStateCharItems(this.state.newCharsLoading);
-    }
-    if (this.props.offset !== prevProps.offset) {
-      this.onRequest(this.props.offset);
-    }
-  }
+  useEffect(() => {
+    onRequest(props.offset);
+  }, [props.offset]);
 
-  onRequest = (offset) => {
-    this.setState({
-      newCharsLoading: true,
-    });
-    this.marvelServices
-      .getAllCharacters(offset)
-      .then(this.onCharLoaded)
-      .catch(this.onError);
+  const onRequest = (offset) => {
+    setNewCharLoading(true);
+    marvelServices.getAllCharacters(offset).then(onCharLoaded).catch(onError);
   };
 
-  onCharLoaded = (newCharItems) => {
+  const onCharLoaded = (newCharItems) => {
     let ended = false;
     if (newCharItems.length < 9) {
       ended = true;
     }
-    this.setState(({ charItems }) => ({
-      charItems: [...charItems, ...newCharItems],
-      loading: false,
-      newCharsLoading: false,
-      charEnded: ended,
-    }));
+    setCharItems((charItems) => [...charItems, ...newCharItems]);
+    setLoading(false);
+    setNewCharLoading(false);
+    setCharEnded(ended);
   };
 
-  onError = () => {
-    this.setState({
-      loading: false,
-      error: true,
-    });
+  const onError = () => {
+    setLoading(false);
+    setError(true);
   };
 
-  render() {
-    const { charItems, loading, error } = this.state;
-    let style = {};
-    const items = charItems.map((item, i) => {
-      item.thumbnail.indexOf("not") > -1
-        ? (style = { objectFit: "unset" })
-        : (style = {});
-      return (
-        <li
-          tabIndex={i}
-          ref={this.setRef}
-          key={item.key}
-          className="char__item"
-          onClick={() => {
-            this.props.onSelectedChar(item.key);
-            this.onFocusItem(i);
-          }}
-          onKeyPress={(e) => {
-            if (e.key === " " || e.key === "Enter") {
-              this.props.onSelectedChar(item.key);
-              this.onFocusItem(i);
-            }
-          }}
-        >
-          <img style={style} src={item.thumbnail} alt="abyss" />
-          <div className="char__name">{item.name}</div>
-        </li>
-      );
-    });
-
-    loading || error ? (style = { display: "flex" }) : (style = {});
+  let style = {};
+  const items = charItems.map((item, i) => {
+    item.thumbnail.indexOf("not") > -1
+      ? (style = { objectFit: "unset" })
+      : (style = {});
     return (
-      <ul style={style} className="char__grid">
-        {!(loading || error) ? items : loading ? <Spinner /> : <Error />}
-      </ul>
+      <li
+        tabIndex={i}
+        ref={(el) => (itemsRefs.current[i] = el)}
+        key={item.key}
+        className="char__item"
+        onClick={() => {
+          props.onSelectedChar(item.key);
+          onFocusItem(i);
+        }}
+        onKeyPress={(e) => {
+          if (e.key === " " || e.key === "Enter") {
+            props.onSelectedChar(item.key);
+            onFocusItem(i);
+          }
+        }}
+      >
+        <img style={style} src={item.thumbnail} alt="abyss" />
+        <div className="char__name">{item.name}</div>
+      </li>
     );
-  }
+  });
+
+  loading || error ? (style = { display: "flex" }) : (style = {});
+  return (
+    <ul style={style} className="char__grid">
+      {!(loading || error) ? items : loading ? <Spinner /> : <Error />}
+    </ul>
+  );
 }
 
 export default CharItems;
