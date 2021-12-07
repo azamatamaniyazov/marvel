@@ -1,50 +1,32 @@
 import { useState, useEffect } from "react";
-import MarvelServices from "../../services/MarvelServices";
+import useMarvelServices from "../../services/MarvelServices";
 
 import "./randomChar.scss";
 import mjolnir from "../../resources/img/mjolnir.png";
 import Spinner from "../spinner/Spinner";
 import Error from "../onError/Error";
 
-function RandomChar() {
-  const [char, setChar] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+const RandomChar = () => {
+  const [char, setChar] = useState(null);
 
-  const marvelServices = new MarvelServices();
+  const { loading, error, getCharacter, clearError } = useMarvelServices();
 
   useEffect(() => {
     updateChar();
-
-    const timerId = setInterval(updateChar, 7000);
-
-    return () => {
-      clearInterval(timerId);
-    };
   }, []);
 
   const onCharLoaded = (char) => {
     setChar(char);
-    setLoading(false);
-  };
-
-  const onCharLoading = () => {
-    setLoading(true);
-  };
-
-  const onError = () => {
-    setError(true);
-    setLoading(false);
   };
 
   const updateChar = () => {
+    clearError();
     const id = Math.floor(Math.random() * (1011400 - 1011000)) + 1011000;
-    onCharLoading();
-    marvelServices.getCharacter(id).then(onCharLoaded).catch(onError);
+    getCharacter(id).then(onCharLoaded);
   };
 
-  const spinner = loading ? <Spinner /> : null;
-  const content = !(loading || error) ? <View char={char} /> : null;
+  const spinner = loading && !error ? <Spinner /> : null;
+  const content = !(loading || error || !char) ? <View char={char} /> : null;
   const errorMessage = error ? <Error /> : null;
 
   return (
@@ -66,14 +48,17 @@ function RandomChar() {
       </div>
     </div>
   );
-}
+};
 
-const View = (props) => {
-  const { name, desc, thumbnail, homepage, wiki } = props.char;
+const View = ({ char }) => {
+  const { name, desc, thumbnail, homepage, wiki } = char;
   let style = {};
-  thumbnail.indexOf("not") > -1
-    ? (style = { objectFit: "contain" })
-    : (style = {});
+  if (
+    thumbnail ===
+    "http://i.annihil.us/u/prod/marvel/i/mg/b/40/image_not_available.jpg"
+  ) {
+    style = { objectFit: "contain" };
+  }
 
   return (
     <div className="randomchar__block">

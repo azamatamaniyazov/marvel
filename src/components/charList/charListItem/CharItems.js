@@ -1,16 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import MarvelServices from "../../../services/MarvelServices";
+import useMarvelServices from "../../../services/MarvelServices";
 import Spinner from "../../spinner/Spinner";
 import Error from "../../onError/Error";
 
 function CharItems(props) {
   const [charItems, setCharItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [newCharLoading, setNewCharLoading] = useState(false);
   const [charEnded, setCharEnded] = useState(false);
 
-  const marvelServices = new MarvelServices();
+  const { loading, error, getAllCharacters } = useMarvelServices();
 
   const itemsRefs = useRef([]);
 
@@ -28,11 +26,19 @@ function CharItems(props) {
 
   useEffect(() => {
     onRequest(props.offset);
+    onNewCharLoading(false);
   }, [props.offset]);
 
+  useEffect(() => {
+    onNewCharLoading(true);
+  }, []);
+
   const onRequest = (offset) => {
-    setNewCharLoading(true);
-    marvelServices.getAllCharacters(offset).then(onCharLoaded).catch(onError);
+    getAllCharacters(offset).then(onCharLoaded);
+  };
+
+  const onNewCharLoading = (initial) => {
+    initial ? setNewCharLoading(false) : setNewCharLoading(true);
   };
 
   const onCharLoaded = (newCharItems) => {
@@ -41,14 +47,8 @@ function CharItems(props) {
       ended = true;
     }
     setCharItems((charItems) => [...charItems, ...newCharItems]);
-    setLoading(false);
     setNewCharLoading(false);
     setCharEnded(ended);
-  };
-
-  const onError = () => {
-    setLoading(false);
-    setError(true);
   };
 
   let style = {};
@@ -79,10 +79,18 @@ function CharItems(props) {
     );
   });
 
-  loading || error ? (style = { display: "flex" }) : (style = {});
+  //------------dlya centrirovaniya spinnera i oshibki----------------
+  (loading && !newCharLoading) || error
+    ? (style = { display: "flex" })
+    : (style = {});
+
+  const spinner = loading && !newCharLoading ? <Spinner /> : null;
+  const errorMessage = error ? <Error /> : null;
   return (
     <ul style={style} className="char__grid">
-      {!(loading || error) ? items : loading ? <Spinner /> : <Error />}
+      {spinner}
+      {errorMessage}
+      {!(spinner || errorMessage) ? items : null}
     </ul>
   );
 }
