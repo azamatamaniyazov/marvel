@@ -1,5 +1,5 @@
 import ComicsPage from "./ComicsPage";
 import MainPage from "./MainPage";
-import SingleComicPage from "./SingleComicPage";
+import SinglePage from "./SinglePage";
 
-export { ComicsPage, MainPage, SingleComicPage };
+export { ComicsPage, MainPage, SinglePage };

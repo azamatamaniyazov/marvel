@@ -5,6 +5,7 @@ import CharList from "../charList/CharList";
 import ErrorBoundary from "../errorBoundary/ErrorBoundary";
 import RandomChar from "../randomChar/RandomChar";
 import decoration from "../../resources/img/vision.png";
+import SearchChar from "../search/SearchChar";
 
 function MainPage() {
   const [selectedChar, setChar] = useState(null);
@@ -22,9 +23,14 @@ function MainPage() {
         <ErrorBoundary>
           <CharList onSelectedChar={onSelectedChar} />
         </ErrorBoundary>
-        <ErrorBoundary>
-          <CharInfo selectedId={selectedChar} />
-        </ErrorBoundary>
+        <div>
+          <ErrorBoundary>
+            <CharInfo selectedId={selectedChar} />
+          </ErrorBoundary>
+          <ErrorBoundary>
+            <SearchChar />
+          </ErrorBoundary>
+        </div>
       </div>
       <img className="bg-decoration" src={decoration} alt="vision" />
     </>

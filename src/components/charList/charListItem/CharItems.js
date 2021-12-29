@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { CSSTransition, TransitionGroup } from "react-transition-group";
 import useMarvelServices from "../../../services/MarvelServices";
 import Spinner from "../../spinner/Spinner";
 import Error from "../../onError/Error";
@@ -57,25 +58,27 @@ function CharItems(props) {
       ? (style = { objectFit: "unset" })
       : (style = {});
     return (
-      <li
-        tabIndex={i}
-        ref={(el) => (itemsRefs.current[i] = el)}
-        key={item.key}
-        className="char__item"
-        onClick={() => {
-          props.onSelectedChar(item.key);
-          onFocusItem(i);
-        }}
-        onKeyPress={(e) => {
-          if (e.key === " " || e.key === "Enter") {
+      <CSSTransition key={i} timeout={500} classNames="char__item">
+        <li
+          tabIndex={i}
+          ref={(el) => (itemsRefs.current[i] = el)}
+          key={item.key}
+          className="char__item"
+          onClick={() => {
             props.onSelectedChar(item.key);
             onFocusItem(i);
-          }
-        }}
-      >
-        <img style={style} src={item.thumbnail} alt="abyss" />
-        <div className="char__name">{item.name}</div>
-      </li>
+          }}
+          onKeyPress={(e) => {
+            if (e.key === " " || e.key === "Enter") {
+              props.onSelectedChar(item.key);
+              onFocusItem(i);
+            }
+          }}
+        >
+          <img style={style} src={item.thumbnail} alt="abyss" />
+          <div className="char__name">{item.name}</div>
+        </li>
+      </CSSTransition>
     );
   });
 
@@ -90,7 +93,9 @@ function CharItems(props) {
     <ul style={style} className="char__grid">
       {spinner}
       {errorMessage}
-      {!(spinner || errorMessage) ? items : null}
+      <TransitionGroup component={null}>
+        {!(spinner || errorMessage) ? items : null}
+      </TransitionGroup>
     </ul>
   );
 }
